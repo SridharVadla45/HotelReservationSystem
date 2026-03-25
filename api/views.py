@@ -2,9 +2,19 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from .models import Hotel, Reservation
 from .serializers import HotelSerializer, ReservationSerializer
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(name='checkin', type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, description='Check-in date (YYYY-MM-DD)'),
+        OpenApiParameter(name='checkout', type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY, description='Check-out date (YYYY-MM-DD)')
+    ],
+    responses=HotelSerializer(many=True),
+    description="Returns the list of hotels available in the system. Filters hotels based on provided check-in and check-out dates via query params."
+)
 @api_view(['GET'])
 def getListOfHotels(request):
     """
@@ -31,6 +41,14 @@ def getListOfHotels(request):
     serializer = HotelSerializer(hotels, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@extend_schema(
+    request=ReservationSerializer,
+    responses={
+        201: OpenApiTypes.OBJECT,
+        400: OpenApiTypes.OBJECT
+    },
+    description="Creates a hotel reservation and returns a confirmation number."
+)
 @api_view(['POST'])
 def reservationConfirmation(request):
     """
